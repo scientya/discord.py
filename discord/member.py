@@ -643,6 +643,7 @@ class Member(discord.abc.Messageable, _UserTag):
         suppress: bool = MISSING,
         roles: List[discord.abc.Snowflake] = MISSING,
         voice_channel: Optional[VocalGuildChannel] = MISSING,
+        communication_disabled_until: Optional[datetime.datetime] = MISSING,
         reason: Optional[str] = None,
     ) -> Optional[Member]:
         """|coro|
@@ -651,19 +652,21 @@ class Member(discord.abc.Messageable, _UserTag):
 
         Depending on the parameter passed, this requires different permissions listed below:
 
-        +---------------+--------------------------------------+
-        |   Parameter   |              Permission              |
-        +---------------+--------------------------------------+
-        | nick          | :attr:`Permissions.manage_nicknames` |
-        +---------------+--------------------------------------+
-        | mute          | :attr:`Permissions.mute_members`     |
-        +---------------+--------------------------------------+
-        | deafen        | :attr:`Permissions.deafen_members`   |
-        +---------------+--------------------------------------+
-        | roles         | :attr:`Permissions.manage_roles`     |
-        +---------------+--------------------------------------+
-        | voice_channel | :attr:`Permissions.move_members`     |
-        +---------------+--------------------------------------+
+        +------------------------------+--------------------------------------+
+        |   Parameter                  |              Permission              |
+        +------------------------------+--------------------------------------+
+        | nick                         | :attr:`Permissions.manage_nicknames` |
+        +------------------------------+--------------------------------------+
+        | mute                         | :attr:`Permissions.mute_members`     |
+        +------------------------------+--------------------------------------+
+        | deafen                       | :attr:`Permissions.deafen_members`   |
+        +------------------------------+--------------------------------------+
+        | roles                        | :attr:`Permissions.manage_roles`     |
+        +------------------------------+--------------------------------------+
+        | voice_channel                | :attr:`Permissions.move_members`     |
+        +------------------------------+--------------------------------------+
+        | communication_disabled_until | :attr:`Permissions.manage_channels`  |
+        +------------------------------+--------------------------------------+
 
         All parameters are optional.
 
@@ -672,6 +675,7 @@ class Member(discord.abc.Messageable, _UserTag):
 
         .. versionchanged:: 2.0
             The newly member is now optionally returned, if applicable.
+            Added a ``communication_disabled_until`` parameter to time out a member.
 
         Parameters
         -----------
@@ -691,6 +695,11 @@ class Member(discord.abc.Messageable, _UserTag):
         voice_channel: Optional[:class:`VoiceChannel`]
             The voice channel to move the member to.
             Pass ``None`` to kick them from voice.
+        communication_disabled_until: Optional[:class:`datetime.datetime`]
+            The time until which the member is timed out.
+
+            .. versionadded:: 2.0
+
         reason: Optional[:class:`str`]
             The reason for editing this member. Shows up on the audit log.
 
@@ -746,6 +755,12 @@ class Member(discord.abc.Messageable, _UserTag):
 
         if roles is not MISSING:
             payload['roles'] = tuple(r.id for r in roles)
+
+        if communication_disabled_until is not MISSING:
+            if communication_disabled_until is None:
+                payload["communication_disabled_until"] = None
+            else:
+                payload["communication_disabled_until"] = communication_disabled_until.isoformat()
 
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
@@ -906,3 +921,24 @@ class Member(discord.abc.Messageable, _UserTag):
             The role or ``None`` if not found in the member's roles.
         """
         return self.guild.get_role(role_id) if self._roles.has(role_id) else None
+
+    async def timeout(self, end_time: datetime.datetime, *, reason: Optional[str] = None) -> None:
+        """|coro|
+
+        Timeouts a member.
+
+        You must have the :attr:`~Permissions.moderate_members` permission to
+        use this.
+
+        This raises the same exceptions as :meth:`edit`.
+
+        .. versionadded:: 2.0
+
+        Parameters
+        -----------
+        end_time: :class:`datetime.datetime`
+            The time until which the member is timed out.
+        reason: Optional[:class:`str`]
+            The reason for timeout. Shows up on the audit log.
+        """
+        await self.edit(communication_disabled_until=end_time, reason=reason)
