@@ -552,7 +552,7 @@ class Permissions(BaseFlags):
         return 1 << 38
 
     @flag_value
-    def start_embedded_atcivities(self) -> int:
+    def start_embedded_activities(self) -> int:
         """:class:`bool`: Returns ``True`` if a user can start embedded activities.
 
         .. versionadded:: 2.0
