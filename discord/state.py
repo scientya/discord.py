@@ -60,6 +60,7 @@ from .threads import Thread, ThreadMember
 from .sticker import GuildSticker
 
 if TYPE_CHECKING:
+    from .ui.modal import Modal
     from .abc import PrivateChannel
     from .message import MessageableChannel
     from .guild import GuildChannel, VocalGuildChannel
@@ -253,6 +254,7 @@ class ConnectionState:
         self._emojis: Dict[int, Emoji] = {}
         self._stickers: Dict[int, GuildSticker] = {}
         self._guilds: Dict[int, Guild] = {}
+        self._modals: dict[str, Modal] = {}
         if views:
             self._view_store: ViewStore = ViewStore(self)
 
@@ -473,6 +475,9 @@ class ConnectionState:
             channel = guild and guild._resolve_channel(channel_id)
 
         return channel or PartialMessageable(state=self, id=channel_id), guild
+
+    def store_modal(self, modal: Modal) -> None:
+        self._modals[modal.custom_id] = modal
 
     async def chunker(
         self, guild_id: int, query: str = '', limit: int = 0, presences: bool = False, *, nonce: Optional[str] = None
@@ -704,6 +709,10 @@ class ConnectionState:
             custom_id = interaction.data['custom_id']  # type: ignore
             component_type = interaction.data['component_type']  # type: ignore
             self._view_store.dispatch(component_type, custom_id, interaction)
+        elif data['type'] == 5: # modal submit
+            modal = self._modals.get(interaction.data['custom_id'])
+            if modal:
+                modal._dispatch(interaction)
 
         self.dispatch('interaction', interaction)
 
