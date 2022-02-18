@@ -67,7 +67,7 @@ class Modal:
     async def _handle(self, interaction: Interaction):
         start_time = time()
         await self.callback(interaction)
-        if not interaction.response.is_done and time() - start_time < 3:
+        if not interaction.response.is_done() and time() - start_time < 3:
             try:
                 await interaction.response.defer()
             except:
