@@ -24,8 +24,9 @@ DEALINGS IN THE SOFTWARE.
 
 from __future__ import annotations
 
+import os
 from typing import Any, ClassVar, Dict, List, Optional, TYPE_CHECKING, Tuple, Type, TypeVar, Union
-from .enums import try_enum, ComponentType, ButtonStyle
+from .enums import try_enum, ComponentType, ButtonStyle, TextInputStyle
 from .utils import get_slots, MISSING
 from .partial_emoji import PartialEmoji, _EmojiTag
 
@@ -36,6 +37,7 @@ if TYPE_CHECKING:
         SelectMenu as SelectMenuPayload,
         SelectOption as SelectOptionPayload,
         ActionRow as ActionRowPayload,
+        TextInput as TextInputPayload
     )
     from .emoji import Emoji
 
@@ -46,6 +48,7 @@ __all__ = (
     'Button',
     'SelectMenu',
     'SelectOption',
+    'TextInput',
 )
 
 C = TypeVar('C', bound='Component')
@@ -366,6 +369,100 @@ class SelectOption:
 
         if self.description:
             payload['description'] = self.description
+
+        return payload
+
+
+class TextInput(Component):
+    """Represents a modal's text input field.
+
+    These can be created by users.
+
+    .. versionadded:: 2.0
+
+    Attributes
+    -----------
+    label: :class:`str`
+        The label of the text input.
+        This is displayed above the field where text can be inputted.
+        Can only be up to 100 characters.
+    custom_id: :class:`str`
+        The custom id of the component.
+    style: :class:`.TextInputStyle`
+        The style of the text input.
+    min_length: Optional[:class:`int`]
+        The minimum length of the text input.
+    max_length: Optional[:class:`int`]
+        The maximum length of the text input.
+        Cannot be more than 4000 or less than 1.
+    required: bool
+        Whether the text input must be filled before submitting or not.
+    default: Optional[:class:`str`]
+        The default value of the text input.
+    value: Optional[:class:`str`]
+        The current value of the text input.
+    placeholder: Optional[:class:`str`]
+        The text shown on the text input when it is empty.
+    """
+
+    __slots__: Tuple[str, ...] = (
+        'label',
+        'custom_id',
+        'style',
+        'min_length',
+        'max_length',
+        'required',
+        'default',
+        'value',
+        'placeholder'
+    )
+
+    def __init__(
+        self,
+        *,
+        label: str,
+        custom_id: Optional[str] = None,
+        style: Optional[TextInputStyle] = TextInputStyle.short,
+        min_length: Optional[int] = None,
+        max_length: Optional[int] = None,
+        required: Optional[bool] = True,
+        value: Optional[str] = None,
+        placeholder: Optional[str] = None
+    ) -> None:
+        self.type = ComponentType.text_input
+        self.label: str = label
+        self.custom_id: str = custom_id or os.urandom(16).hex()
+        self.style: TextInputStyle = style
+        self.min_length: Optional[int] = min_length
+        self.max_length: Optional[int] = max_length
+        self.required: bool = required
+        self.default: Optional[str] = value
+        self.value: Optional[str] = value
+        self.placeholder: Optional[str] = placeholder
+
+    def __repr__(self) -> str:
+        return (
+            f'<TextInput label={self.label!r} custom_id={self.custom_id!r} style={self.style} '
+            f'placeholder={self.placeholder!r} value={self.value!r} required={self.required}>'
+        )
+
+    def to_dict(self) -> TextInputPayload:
+        payload: TextInputPayload = {
+            'type': self.type.value,
+            'label': self.label,
+            'custom_id': self.custom_id,
+            'style': self.style.value,
+            'required': self.required
+        }
+
+        if self.min_length:
+            payload['min_length'] = self.min_length
+        if self.max_length:
+            payload['max_length'] = self.max_length
+        if self.value:
+            payload['value'] = self.value
+        if self.placeholder:
+            payload['placeholder'] = self.placeholder
 
         return payload
 

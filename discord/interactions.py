@@ -58,6 +58,7 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
     from .embeds import Embed
     from .ui.view import View
+    from .ui.modal import Modal
     from .channel import VoiceChannel, StageChannel, TextChannel, CategoryChannel, StoreChannel, PartialMessageable
     from .threads import Thread
 
@@ -449,6 +450,35 @@ class InteractionResponse:
                 parent.id, parent.token, session=parent._session, type=InteractionResponseType.pong.value
             )
             self._responded = True
+
+    async def prompt(self, modal: Modal) -> None:
+        """Prompt a modal to the user
+
+        Parameters
+        ----------
+        modal: :class:`.Modal`
+            The modal to prompt.
+
+        Raises
+        ------
+        InteractionResponded
+            This interaction has already been responded to before.
+        ValueError
+            The modal has no fields."""
+        if self._responded:
+            raise InteractionResponded(self._parent)
+
+        if not modal._fields:
+            raise ValueError('Cannot send an empty modal.')
+
+        parent = self._parent
+        adapter = async_context.get()
+        await adapter.create_interaction_response(
+            parent.id, parent.token, session=parent._session, type=InteractionResponseType.modal.value,
+            data=modal.to_dict()
+        )
+        parent._state.store_modal(modal)
+        self._responded = True
 
     async def send_message(
         self,

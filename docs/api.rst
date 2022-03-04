@@ -1500,6 +1500,19 @@ of :class:`enum.Enum`.
 
         An alias for :attr:`link`.
 
+.. class:: TextInputStyle
+
+    Represents the style of the text input component.
+
+    .. versionadded:: 2.0
+
+    .. attribute:: short
+
+        Represents a text field.
+    .. attribute:: long
+
+        Represents a text area.
+
 .. class:: VoiceRegion
 
     Specifies the region a voice server belongs to.
@@ -3983,6 +3996,14 @@ SelectOption
 .. autoclass:: SelectOption
     :members:
 
+TextInput
+~~~~~~~~~~~~~
+
+.. attributetable:: TextInput
+
+.. autoclass:: TextInput
+    :members:
+
 Intents
 ~~~~~~~~~~
 
@@ -4156,6 +4177,14 @@ Select
 
 .. autofunction:: discord.ui.select
 
+Modal
+~~~~~~~
+
+.. attributetable:: discord.ui.Modal
+
+.. autoclass:: discord.ui.Modal
+    :members:
+    :inherited-members:
 
 Exceptions
 ------------
